@@ -1,0 +1,11 @@
+project(BlauVPN)
+
+cmake_minimum_required (VERSION 2.8)
+
+
+if (NOT DEFINED BOOST_ROOT)
+    set(BOOST_ROOT ../lib/boost/ CACHE PATH "Installation prefix of the boost library")
+endif (NOT DEFINED BOOST_ROOT)
+
+
+include_directories(${Boost_INCLUDE_DIR})
