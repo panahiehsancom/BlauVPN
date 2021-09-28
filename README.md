@@ -1,4 +1,4 @@
-# BlauVPN
+### BlauVPN
 
 Arguments:
 				-tun Tun Device name
