@@ -4,11 +4,28 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "TCPClient.h"
 
+std::vector<std::shared_ptr<TCPClient>> clients;
+
+void client_data_received(std::string id, const char* data, size_t size)
+{
+}
+
+
 void data_received(std::string id, const char* data, size_t size)
 {
+
+	std::string destination_ipaddress;
+	std::string port_number;
+	std::string protocol;
+
+	if (protocol == "tcp")
+	{
+		std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>(destination_ipaddress + ":"+);
+	}
 
 }
 int wmain(int argc, wchar_t * argv[])
@@ -33,7 +50,7 @@ int wmain(int argc, wchar_t * argv[])
 		}
 		std::string str_ip(server_address.begin(), server_address.end());
 		std::string str_port(port_number.begin(), port_number.end());
-		std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>("unknown_id");
+		std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>("Server");
 		client->connect_on_data_received(std::bind(data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		client->connect(str_ip, str_port);
 		while (true)
