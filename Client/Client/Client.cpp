@@ -9,9 +9,10 @@
 #include "TCPClient.h"
 
 std::vector<std::shared_ptr<TCPClient>> clients;
-
+std::shared_ptr<TCPClient> server_communication_;
 void client_data_received(std::string id, const char* data, size_t size)
 {
+
 }
 
 
@@ -24,7 +25,9 @@ void data_received(std::string id, const char* data, size_t size)
 
 	if (protocol == "tcp")
 	{
-		std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>(destination_ipaddress + ":"+);
+		std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>(destination_ipaddress + ":"+ port_number);
+		client->connect_on_data_received(std::bind(client_data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+		client->connect(destination_ipaddress, port_number);
 	}
 
 }
@@ -50,9 +53,9 @@ int wmain(int argc, wchar_t * argv[])
 		}
 		std::string str_ip(server_address.begin(), server_address.end());
 		std::string str_port(port_number.begin(), port_number.end());
-		std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>("Server");
-		client->connect_on_data_received(std::bind(data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-		client->connect(str_ip, str_port);
+		server_communication_ = std::make_shared<TCPClient>("Server");
+		server_communication_->connect_on_data_received(std::bind(data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+		server_communication_->connect(str_ip, str_port);
 		while (true)
 		{
 			std::this_thread::sleep_for(std::chrono::seconds(10));
