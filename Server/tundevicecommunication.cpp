@@ -56,6 +56,8 @@ void TunDeviceCommunication::read_thread()
     while(is_running_) {
         int   nbytes = read(fd_, buf, sizeof(buf));
         printf("Read %d bytes from tun \n", nbytes);
+        data_received_connections_(buf, nbytes);
+
     }
 }
 

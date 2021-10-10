@@ -8,7 +8,13 @@
 std::shared_ptr<TCPServer> server_;
 std::shared_ptr<TunDeviceCommunication> dev_;
 
-std::string client_id_;
+std::string client_id_ = "";
+void client_connected(std::string ip, std::string port, std::string client_id)
+{
+    printf("remote ipaddress is %s  connected new id is: %s\n",  ip.c_str(), client_id.c_str());
+    client_id_ = client_id;
+}
+
 void tcp_data_received(const char * data, size_t size, std::string client_id)
 {
     client_id_ = client_id;
@@ -19,7 +25,15 @@ void tcp_data_received(const char * data, size_t size, std::string client_id)
 }
 void tun_data_received(char * data, size_t size)
 {
-    server_->send(data, size, client_id_);
+    if(server_ != nullptr && server_->is_running() && client_id_.size() >1)
+    {
+        server_->send(data, size, client_id_);
+        printf("send %d bytes to client \n", size);
+    }
+    else
+    {
+        printf("there is no active session\n");
+    }
 }
 int main(int argc, char * argv[])
 {
@@ -43,6 +57,7 @@ int main(int argc, char * argv[])
             tun_name = argv[++index];
             dev_ = std::make_shared<TunDeviceCommunication>(tun_name);
             dev_->connect_receive(std::bind(tun_data_received, std::placeholders::_1, std::placeholders::_2));
+            dev_->start();
         }
         if(param == "-b")
         {
@@ -71,6 +86,7 @@ int main(int argc, char * argv[])
     {
         server_ =std::make_shared<TCPServer>(ip, port);
         server_->connect_on_data_received(std::bind(tcp_data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        server_->connect_on_client_connected(std::bind(client_connected, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         server_->init();
         server_->bind();
         server_->start();
