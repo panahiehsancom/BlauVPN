@@ -161,7 +161,6 @@ int main()
 	tcphdr->syn = 0;
 	tcphdr->fin = 0;
 	tcphdr->ns = 1;
-
 	tcphdr->checksum = 0;
 
 	// Initialize the TCP payload to some rubbish

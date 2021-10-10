@@ -159,12 +159,14 @@
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ConnectionRequestMessage.cpp" />
+    <ClCompile Include="RawTCPClient.cpp" />
     <ClCompile Include="TCPClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConnectionRequestMessage.h" />
     <ClInclude Include="IMessage.h" />
     <ClInclude Include="ISerializableMessage.h" />
+    <ClInclude Include="RawTCPClient.h" />
     <ClInclude Include="TCPClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
