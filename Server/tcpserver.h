@@ -43,6 +43,7 @@ typedef std::pair<std::shared_ptr<boost::asio::ip::tcp::socket>, std::string> co
             bool stop()  ;
             void send(char * data, size_t size , std::string client_id);
             boost::signals2::connection connect_on_data_received(std::function<void(const char * data, size_t size,std::string client_id)> func);
+            boost::signals2::connection connect_on_client_connected(std::function<void(std::string ip, std::string port, std::string client_id)> func);
 
 		private:
             std::string ipaddress_;
@@ -60,7 +61,7 @@ typedef std::pair<std::shared_ptr<boost::asio::ip::tcp::socket>, std::string> co
 			std::shared_ptr<boost::asio::io_service::work> work_;
 			std::shared_ptr<boost::asio::io_service> ioService_;
 
-            boost::signals2::signal<void(std::string)> newclientconnected_;
+            boost::signals2::signal<void(std::string ip, std::string port, std::string client_id)> new_client_connection_;
             boost::signals2::signal<void(const char * data, size_t size,std::string client_id)> data_received_connections_;
 			boost::asio::ip::tcp::endpoint serverEndPoint_;
 			boost::thread_group threadGroup_; 

@@ -107,12 +107,11 @@ void TCPServer::handle_accept(std::shared_ptr<boost::asio::ip::tcp::socket> clie
         std::map<std::string, std::shared_ptr<TCPClientEntity>>::iterator it = connection_map_.find(client_id);
         if (it == connection_map_.end())
         {
-            printf("remote ipaddress is %s  connected new id is: %s\n",  remote_ad.to_string().c_str(), client_id.c_str());
             std::array<char, 22808> buffer;
             std::shared_ptr<TCPClientEntity> tcpclient = std::make_shared<TCPClientEntity>(client_id, client, buffer);
             connection_map_.emplace(std::make_pair(client_id, tcpclient));
 
-            newclientconnected_(client_id);
+            new_client_connection_(remote_ad.to_string(), "0", client_id);
 
             client->async_receive(boost::asio::buffer(tcpclient->receiveBuffer_.data(), tcpclient->receiveBuffer_.size()),
                                   boost::bind(&TCPServer::handle_read, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred, tcpclient, client_id));
@@ -145,6 +144,11 @@ void TCPServer::workerThread(std::shared_ptr<boost::asio::io_service> ioService)
 boost::signals2::connection TCPServer::connect_on_data_received(std::function<void (const char *, size_t, std::string)> func)
 {
     return data_received_connections_.connect(func);
+}
+
+boost::signals2::connection TCPServer::connect_on_client_connected(std::function<void (std::string, std::string, std::string)> func)
+{
+    return new_client_connection_.connect(func);
 }
 uint32_t rand32()
 {
