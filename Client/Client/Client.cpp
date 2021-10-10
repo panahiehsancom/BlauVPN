@@ -10,6 +10,7 @@
 
 std::vector<std::shared_ptr<TCPClient>> clients;
 std::shared_ptr<TCPClient> server_communication_;
+
 void client_data_received(std::string id, const char* data, size_t size)
 {
 
