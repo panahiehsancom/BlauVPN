@@ -98,30 +98,49 @@ void print_hex(std::vector<unsigned char> buffer)
 	printf(value.c_str());
 	printf("\n");
 }
-
+void print_hex(std::vector<char> buffer)
+{
+	std::string value = "";
+	for (char c : buffer)
+	{
+		value += get_hex(c) + "-";
+	}
+	printf(value.c_str());
+	printf("\n");
+}
 void data_received(std::string id, const char* data, size_t size)
 {
-	std::string raw_str(data, size);
-	printf("Raw Input String  is : \n%s", data);
-	printf("Raw Hex is \n");
-	std::vector<unsigned char> input_buffer(data + 4, data + size);
+	std::string raw_str(data, size); 
+	printf("Raw Packet is \n");
+
+
+	std::vector<char> input_buffer(data + 4, data + size);//skip 4 first bytes
 	print_hex(input_buffer);
 	ip_hdr* iph = (ip_hdr*)input_buffer.data();
-	tcp_header* tcph = (tcp_header*)(input_buffer.data() + sizeof(iph));
+	std::vector<unsigned char> tcpheader_buffer(input_buffer.data() + 20, input_buffer.data() + 40);
+	tcp_header * tcph = (tcp_header*)(tcpheader_buffer.data());
+
+	std::vector<char> source_port_buffer(tcpheader_buffer.data(), tcpheader_buffer.data() + 2);
+	std::vector<char> dest_port_buffer(tcpheader_buffer.data()+2, tcpheader_buffer.data() + 4);
+	std::reverse(dest_port_buffer.begin(), dest_port_buffer.end());
+	unsigned short dest_buffer = *((unsigned short*)dest_port_buffer.data());
+
+	printf("TCP Header is : \n"); 
+	print_hex(tcpheader_buffer);
 
 	struct in_addr src_ip_addr;
 	src_ip_addr.s_addr = (iph->ip_srcaddr);
-	const char* sourceip = inet_ntoa(src_ip_addr);
+	const char * sourceip = inet_ntoa(src_ip_addr);
 
 	printf("source ip address is : %s\n", sourceip);
 
 	struct in_addr dest_ip_addr;
 	dest_ip_addr.s_addr = (iph->ip_destaddr);
-	const char* dest_ip = inet_ntoa(dest_ip_addr);
+	const char * dest_ip = inet_ntoa(dest_ip_addr);
 
 	printf("Destination ip address is : %s\n", dest_ip);
 	printf("Source Port is : %d\n", tcph->source_port);
-	printf("Destination Port is : %d\n", tcph->dest_port);
+	printf("Destination Port is : %d\n", dest_buffer);
 
 
 	//std::string payload(data + sizeof(iph) + sizeof(iph), data + size);
@@ -132,13 +151,14 @@ void data_received(std::string id, const char* data, size_t size)
 	//if (protocol == "tcp")
 	//{
 	std::shared_ptr<RawTCPClient> client = std::make_shared<RawTCPClient>(destination_ipaddress + ":" + port_number, destination_ipaddress, port_number);
+	clients.push_back(client);
 	client->connect_on_data_received(std::bind(client_data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	client->connect_to_server();
-	client->send_buffer(data + 4, input_buffer.size());
-	clients.push_back(client);
+	client->send_buffer(input_buffer.data(), input_buffer.size());
 	//}
 
 }
+
 int wmain(int argc, wchar_t* argv[])
 {
 	if (argc >= 3)

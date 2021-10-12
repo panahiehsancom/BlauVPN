@@ -4,7 +4,7 @@
 #include <string>
 
 #include <boost/signals2.hpp>
-
+#include <boost/thread.hpp>
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -42,5 +42,7 @@ private:
 	void receive_thread();
 	SOCKET ConnectSocket;
 	bool is_running_;
+
+	boost::thread_group threadGroup_;
 };
 

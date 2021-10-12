@@ -90,6 +90,7 @@ int RawTCPClient::connect_to_server()
 		return 1;
 	}
 	is_running_ = true;
+	threadGroup_.create_thread(std::bind(&RawTCPClient::receive_thread, this));
 }
 
 int RawTCPClient::send_buffer(const char* data, size_t size)
