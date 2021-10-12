@@ -2,6 +2,7 @@
 
 RawTCPClient::RawTCPClient(std::string id, std::string ipaddress, std::string port_number) : id_(id), ipaddress_(ipaddress), port_(port_number)
 {
+	is_running_ = false;
 }
 
 int RawTCPClient::connect_to_server()
@@ -88,6 +89,7 @@ int RawTCPClient::connect_to_server()
 		WSACleanup();
 		return 1;
 	}
+	is_running_ = true;
 }
 
 int RawTCPClient::send_buffer(const char* data, size_t size)
@@ -114,17 +116,18 @@ void RawTCPClient::receive_thread()
 	int recvbuflen = DEFAULT_BUFLEN;
 	int iResult;
 	// Receive until the peer closes the connection
-	do {
-
+	while(is_running_)
+	{
 		iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 		if (iResult > 0)
 		{
 			printf("Bytes received: %d\n", iResult);
+			receive_connection_(id_, recvbuf, recvbuflen);
 		}
 		else if (iResult == 0)
 			printf("Connection closed\n");
 		else
 			printf("recv failed with error: %d\n", WSAGetLastError());
 
-	} while (iResult > 0);
+	}  
 }

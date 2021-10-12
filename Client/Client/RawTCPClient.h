@@ -41,5 +41,6 @@ private:
 
 	void receive_thread();
 	SOCKET ConnectSocket;
+	bool is_running_;
 };
 
