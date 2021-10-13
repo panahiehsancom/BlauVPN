@@ -161,6 +161,8 @@
     <ClCompile Include="ConnectionRequestMessage.cpp" />
     <ClCompile Include="RawTCPClient.cpp" />
     <ClCompile Include="TCPClient.cpp" />
+    <ClCompile Include="TCPRawPacketDecoder.cpp" />
+    <ClCompile Include="TCPRawPacketEncoder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConnectionRequestMessage.h" />
@@ -168,6 +170,8 @@
     <ClInclude Include="ISerializableMessage.h" />
     <ClInclude Include="RawTCPClient.h" />
     <ClInclude Include="TCPClient.h" />
+    <ClInclude Include="TCPRawPacketDecoder.h" />
+    <ClInclude Include="TCPRawPacketEncoder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

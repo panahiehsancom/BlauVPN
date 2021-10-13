@@ -36,7 +36,7 @@ int RawTCPClient::connect_to_server()
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_RAW;
-
+	
 	// Resolve the server address and port
 	iResult = getaddrinfo(ipaddress_.c_str(), port_.c_str(), &hints, &result);
 	if (iResult != 0) {
