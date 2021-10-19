@@ -79,6 +79,17 @@ int RawTCPClient::connect_to_server()
 			ConnectSocket = INVALID_SOCKET;
 			continue;
 		}
+
+		local_port_ = -1;
+		struct sockaddr_in sin;
+		int addrlen = sizeof(sin);
+		if (getsockname(ConnectSocket, (struct sockaddr*) & sin, &addrlen) == 0 &&
+			sin.sin_family == AF_INET &&
+			addrlen == sizeof(sin))
+		{
+			local_port_ = ntohs(sin.sin_port);
+		}
+
 		break;
 	}
 
@@ -89,6 +100,8 @@ int RawTCPClient::connect_to_server()
 		WSACleanup();
 		return 1;
 	}
+	
+
 	is_running_ = true;
 	threadGroup_.create_thread(std::bind(&RawTCPClient::receive_thread, this));
 }

@@ -14,7 +14,7 @@
 #include "TCPRawPacketEncoder.h"
 #include "TCPRawPacketDecoder.h"
 
-std::vector<std::shared_ptr<RawTCPClient>> clients;
+std::map<std::string, std::shared_ptr<RawTCPClient>> clients;
 std::shared_ptr<TCPClient> server_communication_;
 
 /*
@@ -151,19 +151,24 @@ void data_received(std::string id, const char* data, size_t size)
 	printf("Source Port is : %d\n", src_port);
 	printf("Destination Port is : %d\n", dest_port);
 
-	std::vector<char> out_putbuffer = decoder->decode(input_buffer, "172.17.1.11", "4455", dest_ipaddress, str_dest_port);
+	std::vector<char> out_putbuffer = decoder->decode(input_buffer, "192.168.56.1", "5544", dest_ipaddress, str_dest_port);
 	printf("Raw Packet After Decoding is : \n");
 	print_hex(out_putbuffer);
 	std::string new_src_ipaddress = encoder->get_source_ipaddress(out_putbuffer);
 	printf("new source ip address is : %s\n", new_src_ipaddress.c_str());
 	printf("-----------------------------------------------------------------------------------------------------------------------------------------\n");
-	std::shared_ptr<RawTCPClient> client = std::make_shared<RawTCPClient>(dest_ipaddress + ":" + str_dest_port, dest_ipaddress, str_dest_port);
-	clients.push_back(client);
-	client->connect_on_data_received(std::bind(client_data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	client->connect_to_server();
-	client->send_buffer(out_putbuffer.data(), out_putbuffer.size());
 
+	if (clients.size() > 0)
+	{
+		std::shared_ptr<RawTCPClient> client = std::make_shared<RawTCPClient>(dest_ipaddress + ":" + str_dest_port, dest_ipaddress, str_dest_port);
+		client->connect_on_data_received(std::bind(client_data_received, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+		client->connect_to_server();
 
+		out_putbuffer.insert(std::begin(out_putbuffer), data, data + 4);
+		client->send_buffer(out_putbuffer.data(), out_putbuffer.size());
+
+		clients.emplace(std::pair<std::string, std::shared_ptr<RawTCPClient>>("192.168.56.1:5544", client));
+	}
 }
 
 int wmain(int argc, wchar_t* argv[])

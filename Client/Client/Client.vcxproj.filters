@@ -33,6 +33,9 @@
     <ClCompile Include="TCPRawPacketDecoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RawTCPServer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IMessage.h">
@@ -54,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TCPRawPacketDecoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RawTCPServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -160,6 +160,7 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ConnectionRequestMessage.cpp" />
     <ClCompile Include="RawTCPClient.cpp" />
+    <ClCompile Include="RawTCPServer.cpp" />
     <ClCompile Include="TCPClient.cpp" />
     <ClCompile Include="TCPRawPacketDecoder.cpp" />
     <ClCompile Include="TCPRawPacketEncoder.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="IMessage.h" />
     <ClInclude Include="ISerializableMessage.h" />
     <ClInclude Include="RawTCPClient.h" />
+    <ClInclude Include="RawTCPServer.h" />
     <ClInclude Include="TCPClient.h" />
     <ClInclude Include="TCPRawPacketDecoder.h" />
     <ClInclude Include="TCPRawPacketEncoder.h" />

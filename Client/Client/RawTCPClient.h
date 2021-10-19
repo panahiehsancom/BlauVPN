@@ -42,7 +42,7 @@ private:
 	void receive_thread();
 	SOCKET ConnectSocket;
 	bool is_running_;
-
+	int local_port_;
 	boost::thread_group threadGroup_;
 };
 
