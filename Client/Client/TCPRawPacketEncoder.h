@@ -12,6 +12,28 @@ class TCPRawPacketEncoder
 {
 public:
 
+	struct iphdr {
+		unsigned char	ihl : 4,
+			unsigned char	version : 4;
+		unsigned char	tos;
+		unsigned short	tot_len;
+		unsigned short	id;
+		unsigned short	frag_off;
+		unsigned char	ttl;
+		unsigned char	protocol;
+		unsigned short	check;
+		unsigned int	saddr;
+		unsigned int	daddr;
+		/*The options start here. */
+	};
+
+	struct pseudo_tcp_header
+	{
+		struct in_addr source, dest;
+		u_char reserved;
+		u_char protocol;
+		u_short tcp_size;
+	};
 
 	typedef struct IPHeader
 	{
@@ -66,7 +88,9 @@ public:
 		unsigned short window; // window
 		unsigned short checksum; // checksum
 		unsigned short urgent_pointer; // urgent pointer
+		 
 	};
+	  
 
 	IPHeader get_ipheader(std::vector<char> buffer);
 	TCPHeader get_tcp_header(std::vector<char> buffer);
