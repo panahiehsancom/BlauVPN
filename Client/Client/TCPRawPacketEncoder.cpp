@@ -1,23 +1,23 @@
 #include "TCPRawPacketEncoder.h"
 
-TCPRawPacketEncoder::IPHeader TCPRawPacketEncoder::get_ipheader(std::vector<char> buffer)
+TCPRawPacketEncoder::iphdr TCPRawPacketEncoder::get_ipheader(std::vector<char> buffer)
 {
-	IPHeader iph = *((IPHeader *)buffer.data()); 
+	iphdr iph = *((iphdr*)buffer.data()); 
 	return iph;
 }
 
-TCPRawPacketEncoder::TCPHeader TCPRawPacketEncoder::get_tcp_header(std::vector<char> buffer)
+ TCPRawPacketEncoder::tcphdr TCPRawPacketEncoder::get_tcp_header(std::vector<char> buffer)
 {
 	std::vector<unsigned char> tcpheader_buffer(buffer.data() + 20, buffer.data() + 40);
-	TCPHeader tcph = *((TCPHeader*)(tcpheader_buffer.data()));
+	tcphdr  tcph = *((tcphdr*)(tcpheader_buffer.data())); 
 	return tcph;
 }
 
 std::string TCPRawPacketEncoder::get_source_ipaddress(std::vector<char> buffer)
 {
-	IPHeader iph = get_ipheader(buffer);
+	TCPRawPacketEncoder::iphdr iph = get_ipheader(buffer);
 	struct in_addr src_ip_addr;
-	src_ip_addr.s_addr = (iph.ip_srcaddr);
+	src_ip_addr.s_addr = iph.saddr;
 	const char * sourceip = inet_ntoa(src_ip_addr);
 	std::string str_ip = sourceip;
 	return str_ip;
@@ -25,9 +25,9 @@ std::string TCPRawPacketEncoder::get_source_ipaddress(std::vector<char> buffer)
 
 std::string TCPRawPacketEncoder::get_destination_ipaddress(std::vector<char> buffer)
 {
-	IPHeader iph = get_ipheader(buffer);
+	TCPRawPacketEncoder::iphdr iph = get_ipheader(buffer);
 	struct in_addr dest_ip_addr;
-	dest_ip_addr.s_addr = (iph.ip_destaddr);
+	dest_ip_addr.s_addr = iph.daddr;
 	const char* dest_ip = inet_ntoa(dest_ip_addr);
 	std::string str_ip = dest_ip;
 	return str_ip;

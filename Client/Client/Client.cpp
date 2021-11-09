@@ -9,6 +9,7 @@
 #include <vector> 
 #include <random>
 #include <algorithm>
+#include <mutex>
 
 #include "TCPClient.h"
 #include "RawTCPClient.h"
@@ -19,7 +20,7 @@
 
 std::map<std::string, std::shared_ptr<RawTCPClient>> clients;
 std::shared_ptr<TCPClient> server_communication_;
-
+std::mutex mtx;
 
 void client_data_received(std::string id, const char* data, size_t size)
 {
@@ -92,28 +93,40 @@ std::vector<char> unhex(std::string hex_str)
 int count = 0;
 void data_received(std::string id, const char* data, size_t size)
 {
+	std::lock_guard<std::mutex> lock(mtx);
+
 	std::shared_ptr<TCPRawPacketEncoder> encoder = std::make_shared<TCPRawPacketEncoder>();
 	std::shared_ptr<TCPRawPacketDecoder> decoder = std::make_shared<TCPRawPacketDecoder>(encoder);
 	std::vector<char> out_putbuffer;
 	std::string raw_str(data, size);
+	std::vector<char> input_buffer;
 	printf("-----------------------------------------------------------------------------------------------------------------------------------------\n");
-	//printf("Raw Packet is \n");
+	printf("Raw Packet is \n");
+
+	if (true)
+	{
+		//Test Scenario
+		count++;
+		if (count == 1)
+			input_buffer = unhex("45020034208540008006e885c0a83801c0a83865d3bb15a8252bf6ba0000000080c2faf07c5e0000020405b40103030801010402");
+		else
+			return;
+	}
+	else
+	{
+		input_buffer.resize(size - 4);//skip 4 first bytes
+		std::copy(data + 4, data + size, input_buffer.data());//skip 4 first bytes 
+	}
+	print_hex(input_buffer);
 
 
-	std::vector<char> input_buffer(size - 4);//skip 4 first bytes
-	std::copy(data + 4, data + size, input_buffer.data());//skip 4 first bytes 
-	//print_hex(input_buffer);
-
-	//Test Scenario
-	//count++;
-	//if (count == 1)
-	//	input_buffer = unhex("450200342f8b40008006d97fc0a83801c0a83865c73715a850f240b20000000080c2faf013240000020405b40103030801010402");
-	//else
-	//	return;
-	//
-	TCPRawPacketEncoder::IPHeader iph = encoder->get_ipheader(input_buffer);
-		 
-	switch (iph.ip_protocol) //Check the Protocol and do accordingly...
+	TCPRawPacketEncoder::tcphdr  tcp_header = encoder->get_tcp_header(input_buffer);
+	TCPRawPacketEncoder::iphdr ip_header = encoder->get_ipheader(input_buffer);
+	
+	std::shared_ptr<TCPRawPacketEncoder::iphdr> iph(&ip_header);
+	std::shared_ptr<TCPRawPacketEncoder::tcphdr> tcph(&tcp_header);
+	
+	switch (iph->protocol) //Check the Protocol and do accordingly...
 	{
 	case 1: //ICMP Protocol 
 		printf("ICMP Packet Received\n");
@@ -125,10 +138,12 @@ void data_received(std::string id, const char* data, size_t size)
 		printf("UDP Packet Received\n");
 		break;
 	default: //Some Other Protocol like ARP etc.
+	{
+		return;
 		break;
 	}
+	}
 
-	TCPRawPacketEncoder::TCPHeader tcph = encoder->get_tcp_header(input_buffer);
 
 	//std::string src_ipaddress = encoder->get_source_ipaddress(input_buffer);
 	//unsigned short src_port = encoder->get_source_port(input_buffer);
@@ -136,57 +151,48 @@ void data_received(std::string id, const char* data, size_t size)
 	//unsigned short dest_port = encoder->get_destination_port(input_buffer);
 	//std::string str_dest_port = std::to_string(dest_port);
 
-	std::string src_ipaddress ="192.168.56.1";
+	std::string src_ipaddress = "192.168.56.1";
 	unsigned short src_port = 50999;
 	std::string dest_ipaddress = "192.168.56.101";
 	unsigned short dest_port = 5544;
 	std::string str_dest_port = std::to_string(dest_port);
 	//TODO:
-	if (tcph.syn== 1)//if this is sync packet then change the parameter otherwise skip
-	{
-		iph.ip_ttl = 128; //Time to Alive
-		iph.ip_tos = 2; // Type of Server,  2=ECN-Capable Transport codepoint 0=Not Capable transport codepoint
-		iph.ip_id = 0x8520;
-		tcph.fin = 0;
-		tcph.syn = 0;
-		tcph.rst = 0;
-		tcph.psh = 0;
-		tcph.ack = 0;
-		tcph.urg = 0;
-		tcph.ecn = 0;
-		tcph.cwr = 0;
-	
-		tcph.syn = 1;
-		tcph.ecn = 1;
-		tcph.cwr = 1;
-		
-		tcph.ns =0;
-		tcph.reserved_part1 = 0;
-		tcph.data_offset =8;
-	
-		iph.ip_srcaddr = inet_addr("192.168.56.1");
-		//iph.ip_id = 0x8b2f;
-		iph.ip_checksum = 0x0000;
-		iph.ip_total_length = 52; // it should remote other tcp optional data and total_length is (ip header) size +  (tcp header) size
 
-		tcph.source_port = 0xbbd3;
-		tcph.dest_port = 0xa815;
-		tcph.checksum = 0x0000;
-		tcph.sequence = 0xbaf62b25;
-		tcph.acknowledge = 0x00;
-		std::vector<char> otherinfo = unhex("020405b40103030801010402");
-		//tcph.extra_data.insert(std::end(tcph.extra_data), std::begin(otherinfo), std::end(otherinfo));
-		std::vector<char> temp = decoder->decode(iph, tcph, otherinfo);
-		 
-		//tcph.checksum = 0x1324;
-	 
-		//temp.insert(std::end(temp), std::begin(otherinfo), std::end(otherinfo));
-		out_putbuffer = temp;
-		printf("New Packet is \n");
-		print_hex(out_putbuffer);
-	}
-	//tcph.
-	//
+	iph->ttl = 0x80; //Time to Alive
+	iph->tos = 2; // Type of Server,  2=ECN-Capable Transport codepoint 0=Not Capable transport codepoint
+	iph->id = 0x8520;
+	tcph->fin = 0;
+	tcph->syn = 0;
+	tcph->rst = 0;
+	tcph->psh = 0;
+	tcph->ack = 0;
+	tcph->urg = 0;
+	tcph->doff = 8;
+	tcph->res2 = 3;
+	tcph->syn = 1;
+
+
+	iph->saddr = inet_addr("192.168.56.1");
+	//iph.ip_id = 0x8b2f;
+	iph->check = 0x0000;
+	iph->tot_len = 13312; // it should remote other tcp optional data and total_length is (ip header) size +  (tcp header) size
+
+	tcph->source = 0xbbd3;
+	tcph->dest = 0xa815;
+	tcph->check = 0x0000;
+
+	tcph->ack = 0x00;
+	tcph->seq = 0xbaf62b25;
+	std::vector<char> otherinfo = unhex("020405b40103030801010402");
+	//tcph.extra_data.insert(std::end(tcph.extra_data), std::begin(otherinfo), std::end(otherinfo));
+	std::vector<char> temp = decoder->decode(iph, tcph, otherinfo);
+
+	//tcph.checksum = 0x1324;
+
+	//temp.insert(std::end(temp), std::begin(otherinfo), std::end(otherinfo));
+	out_putbuffer = temp;
+	printf("New Packet is \n");
+	print_hex(out_putbuffer);
 
 
 	printf("Destination ip address is : %s\n", dest_ipaddress.c_str());
@@ -218,6 +224,7 @@ void data_received(std::string id, const char* data, size_t size)
 
 int wmain(int argc, wchar_t* argv[])
 {
+	data_received("", 0, 0);
 	if (argc >= 3)
 	{
 		std::wstring server_address;
