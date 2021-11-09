@@ -23,13 +23,13 @@ std::vector<char> TCPRawPacketDecoder::decode(std::vector<char> tcpbuffer, std::
 	return tcpbuffer;
 }
 
-std::vector<char> TCPRawPacketDecoder::decode(std::shared_ptr<TCPRawPacketEncoder::iphdr> header, std::shared_ptr<TCPRawPacketEncoder::tcphdr> tcpheader, std::vector<char> extra_tcp)
+std::vector<char> TCPRawPacketDecoder::decode(TCPRawPacketEncoder::iphdr header, TCPRawPacketEncoder::tcphdr tcpheader, std::vector<char> extra_tcp)
 {
 
-	header->check = (unsigned short)CheckSum((USHORT*)header.get(), sizeof(header));
+	header.check = (unsigned short)CheckSum((USHORT*)&header, sizeof(header));
 
-	tcpheader->check = 0;
-	tcpheader->check = compute_tcp_checksum(header, tcpheader);
+	tcpheader.check = 0;
+	tcpheader.check = compute_tcp_checksum(header, tcpheader, extra_tcp);
 
 
 
@@ -64,16 +64,16 @@ unsigned short TCPRawPacketDecoder::CheckSum(USHORT* buffer, int size)
 	return (USHORT)(~cksum);
 }
 
-unsigned short TCPRawPacketDecoder::compute_tcp_checksum(std::shared_ptr<TCPRawPacketEncoder::iphdr> myip, std::shared_ptr <TCPRawPacketEncoder::tcphdr> mytcp)
+unsigned short TCPRawPacketDecoder::compute_tcp_checksum(TCPRawPacketEncoder::iphdr myip, TCPRawPacketEncoder::tcphdr mytcp, std::vector<char> extra_tcp)
 {
-	unsigned short  total_len = ntohs(myip->tot_len);
+	unsigned short  total_len = ntohs(myip.tot_len);
 
-	int tcpopt_len = mytcp->doff * 4 - 20;
-	int tcpdatalen = total_len - (mytcp->doff * 4) - (myip->ihl * 4);
+	int tcpopt_len = mytcp.doff * 4 - 20;
+	int tcpdatalen = total_len - (mytcp.doff * 4) - (myip.ihl * 4);
 	TCPRawPacketEncoder::tcp_pseudo pseudohead;
-	mytcp->check = 0;
-	pseudohead.src_addr = myip->saddr;
-	pseudohead.dst_addr = myip->daddr;
+	mytcp.check = 0;
+	pseudohead.src_addr = myip.saddr;
+	pseudohead.dst_addr = myip.daddr;
 	pseudohead.zero = 0;
 	pseudohead.proto = IPPROTO_TCP;
 	pseudohead.length = htons(sizeof(struct TCPRawPacketEncoder::tcphdr) + tcpopt_len + tcpdatalen);
@@ -83,22 +83,23 @@ unsigned short TCPRawPacketDecoder::compute_tcp_checksum(std::shared_ptr<TCPRawP
 	std::vector<unsigned char > test;
 	size_t size_tcp_header_struct = sizeof(struct TCPRawPacketEncoder::tcphdr);
 	size_t  size_tcp_pseudo = sizeof(struct TCPRawPacketEncoder::tcp_pseudo);
-	size_t temp_size = (myip->ihl * 4);
-	size_t temp2_size = (mytcp->doff * 4);
-	test.insert(std::end(test), (unsigned char*)&pseudohead, (unsigned char*)& pseudohead + size_tcp_pseudo);
+	size_t temp_size = (myip.ihl * 4);
+	size_t temp2_size = (mytcp.doff * 4);
+	test.insert(std::end(test), (unsigned char*)&pseudohead, (unsigned char*)&pseudohead + size_tcp_pseudo);
 	test.insert(std::end(test), (unsigned char*)&mytcp, (unsigned char*)&mytcp + size_tcp_header_struct);
 	test.insert(std::end(test), (unsigned char*)&myip + (temp_size + size_tcp_header_struct), (unsigned char*)&myip + (temp_size + size_tcp_header_struct + tcpdatalen));
 	if(tcpdatalen > temp2_size)//most of time tcp data len is zero
 		test.insert(std::end(test), (unsigned char*)&mytcp + temp2_size, (unsigned char*)&mytcp + tcpdatalen);
-	memset(tcp, totaltcp_len, 0);
-	memcpy((unsigned char*)tcp, &pseudohead, sizeof(struct TCPRawPacketEncoder::tcp_pseudo));
-	memcpy((unsigned char*)tcp + sizeof(struct TCPRawPacketEncoder::tcp_pseudo), (unsigned char*)& mytcp, sizeof(struct TCPRawPacketEncoder::tcphdr));
-	memcpy((unsigned char*)tcp + sizeof(struct TCPRawPacketEncoder::tcp_pseudo) + sizeof(struct TCPRawPacketEncoder::tcphdr), (unsigned char*)& myip + (myip->ihl * 4) + (sizeof(struct TCPRawPacketEncoder::tcphdr)), tcpopt_len);
-	memcpy((unsigned char*)tcp + sizeof(struct TCPRawPacketEncoder::tcp_pseudo) + sizeof(struct TCPRawPacketEncoder::tcphdr) + tcpopt_len, (unsigned char*)& mytcp + (mytcp->doff * 4), tcpdatalen);
-
-
+	test.insert(std::end(test), std::begin(extra_tcp), std::end(extra_tcp));
+	//memset(tcp, totaltcp_len, 0);
+	//memcpy((unsigned char*)tcp, &pseudohead, sizeof(struct TCPRawPacketEncoder::tcp_pseudo));
+	//memcpy((unsigned char*)tcp + sizeof(struct TCPRawPacketEncoder::tcp_pseudo), (unsigned char*)& mytcp, sizeof(struct TCPRawPacketEncoder::tcphdr));
+	//memcpy((unsigned char*)tcp + sizeof(struct TCPRawPacketEncoder::tcp_pseudo) + sizeof(struct TCPRawPacketEncoder::tcphdr), (unsigned char*)& myip + (myip.ihl * 4) + (sizeof(struct TCPRawPacketEncoder::tcphdr)), tcpopt_len);
+	//memcpy((unsigned char*)tcp + sizeof(struct TCPRawPacketEncoder::tcp_pseudo) + sizeof(struct TCPRawPacketEncoder::tcphdr) + tcpopt_len, (unsigned char*)& mytcp + (mytcp.doff * 4), tcpdatalen);
+	//std::vector<unsigned char > test(totaltcp_len);
+	//std::copy((unsigned char*)tcp, (unsigned char*)tcp + (totaltcp_len), test.data());
 	//std::vector<unsigned char > test(totaltcp_len*2);
 	//std::copy(tcp, tcp + totaltcp_len*2, test.data());
-	return CheckSum(tcp, totaltcp_len);
+	return CheckSum((USHORT*)test.data(), totaltcp_len);
 	//return CheckSum((unsigned short* )test.data(), test.size());
 }
